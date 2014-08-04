@@ -180,6 +180,8 @@ prompt = (paramName, paramType, defaultValue, options, callback) ->
       input.val(String(defaultValue))
     when 'xsd:int', 'xsd:unsignedInt'
       input = $("<input type=\"number\" value=\"#{defaultValue}\"/>")
+    when 'xsd:base64', 'xsd:base64Binary'
+      input = $("<input type=\"file\"/>")
     else
       if options?.options?
         input = $('<select>' + ("<option value='#{o}'>#{o}</option>" for o in options.options).join('') + '</select>')
@@ -197,13 +199,19 @@ prompt = (paramName, paramType, defaultValue, options, callback) ->
     modalWrapper.remove()
     switch paramType
       when 'xsd:boolean'
-        val = input.val() == 'true'
+        callback(input.val() == 'true')
       when 'xsd:int', 'xsd:unsignedInt'
-        val = parseInt(input.val())
+        callback(parseInt(input.val()))
+      when 'xsd:base64', 'xsd:base64Binary'
+        reader = new FileReader()
+        reader.onload = (evt) ->
+          callback(btoa(evt.target.result))
+        reader.onerror = (evt) ->
+          alert("Could not load file")
+        reader.readAsBinaryString(input.prop('files')[0])
       else
-        val = input.val()
+        callback(input.val())
 
-    callback(val)
     return false
   )
 
